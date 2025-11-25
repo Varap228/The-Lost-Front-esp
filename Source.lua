@@ -1,8 +1,22 @@
 local Rayfield = loadstring(game:HttpGet('https://sirius.menu/rayfield'))()
 
-
 local ATTACKER_PANTS_ID = "71322661859196"
 local DEFENDER_PANTS_ID = "82267040223924"
+
+local function GetRandomString(length)
+    local chars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
+    local str = ""
+    for i = 1, length do
+        local randIndex = math.random(1, #chars)
+        str = str .. string.sub(chars, randIndex, randIndex)
+    end
+    return str
+end
+
+local CoreGui = game:GetService("CoreGui")
+local SafeContainer = Instance.new("Folder")
+SafeContainer.Name = GetRandomString(math.random(10, 20))
+SafeContainer.Parent = CoreGui
 
 local Window = Rayfield:CreateWindow({
    Name = "ESP | by Varap",
@@ -115,7 +129,6 @@ ESP_Tab:CreateSlider({
     Callback = function(v) settings.OutlineTransparency = v end,
 })
 
-
 local PlayersTab = Window:CreateTab("Players", "user")
 
 local InfoParagraph = PlayersTab:CreateParagraph({Title = "Player Info", Content = "Select a player from the list below."})
@@ -179,8 +192,6 @@ PlayersTab:CreateButton({
     Callback = UpdatePlayerList
 })
 
--- === ESP ===
-
 local RunService = game:GetService("RunService")
 local Players = game:GetService("Players")
 local localPlayer = Players.LocalPlayer
@@ -208,7 +219,7 @@ local function handleHighlight(player, character, color)
     
     local highlight = espCache[player].Highlight
     
-    if highlight and highlight.Parent == character then
+    if highlight and highlight.Adornee == character then
         highlight.FillColor = color
         highlight.OutlineColor = color
         highlight.Enabled = settings.ChamsEnabled
@@ -224,7 +235,10 @@ local function handleHighlight(player, character, color)
     highlight.OutlineColor = color
     highlight.FillTransparency = settings.FillTransparency
     highlight.OutlineTransparency = settings.OutlineTransparency
-    highlight.Parent = character
+    
+    highlight.Parent = SafeContainer
+    highlight.Adornee = character
+    
     espCache[player].Highlight = highlight
 end
 
