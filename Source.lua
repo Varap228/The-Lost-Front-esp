@@ -19,7 +19,7 @@ SafeContainer.Name = GetRandomString(math.random(10, 20))
 SafeContainer.Parent = CoreGui
 
 local Window = Rayfield:CreateWindow({
-   Name = "ESP | by Varap",
+   Name = "ESP v1.3 | by Varap",
    LoadingTitle = "Loading...",
    ConfigurationSaving = {
       Enabled = true,
@@ -149,6 +149,18 @@ local function GetTeamNameString(player)
     return "Lobby / Unknown"
 end
 
+local function GetPlayerDevice(player)
+    local devObj = player:FindFirstChild("device")
+    if devObj then
+        if devObj:IsA("StringValue") then
+            return devObj.Value
+        else
+            return tostring(devObj)
+        end
+    end
+    return "Unknown"
+end
+
 local PlayerDropdown = PlayersTab:CreateDropdown({
     Name = "Select Player",
     Options = {},
@@ -162,12 +174,12 @@ local PlayerDropdown = PlayersTab:CreateDropdown({
         if player then
             local age = player.AccountAge
             local userId = player.UserId
-           
             local teamName = GetTeamNameString(player)
+            local device = GetPlayerDevice(player)
             
             InfoParagraph:Set({
                 Title = player.DisplayName .. " (@" .. player.Name .. ")",
-                Content = "Account Age: " .. age .. " days\nTeam: " .. teamName .. "\nUserID: " .. userId
+                Content = "Account Age: " .. age .. " days\nTeam: " .. teamName .. "\nDevice: " .. device .. "\nUserID: " .. userId
             })
         else
             InfoParagraph:Set({Title = "Error", Content = "Player left or not found."})
@@ -190,6 +202,47 @@ UpdatePlayerList()
 PlayersTab:CreateButton({
     Name = "Refresh List",
     Callback = UpdatePlayerList
+})
+
+local InfoTab = Window:CreateTab("Info", "info")
+
+InfoTab:CreateSection("Credits")
+
+InfoTab:CreateParagraph({Title = "Developer", Content = "Discord: varap228"})
+
+InfoTab:CreateButton({
+    Name = "Copy Discord Username",
+    Callback = function()
+        setclipboard("varap228")
+        Rayfield:Notify({
+            Title = "Success",
+            Content = "Discord username copied to clipboard!",
+            Duration = 3,
+            Image = 4483362458,
+        })
+    end,
+})
+
+InfoTab:CreateSection("Update Log")
+
+InfoTab:CreateParagraph({
+    Title = "v1.3",
+    Content = "- Added Info Tab\n- Added Discord Copy Button\n- New Logic for Chams"
+})
+
+InfoTab:CreateParagraph({
+    Title = "v1.2",
+    Content = "- Added Players Tab\n- View Account Age, Device, Team, UserID"
+})
+
+InfoTab:CreateParagraph({
+    Title = "v1.1",
+    Content = "- New Esp logic"
+})
+
+InfoTab:CreateParagraph({
+    Title = "v1.0",
+    Content = "- Initial Release\n- Box, Tracers, Names, Health\n- Chams (Highlight)"
 })
 
 local RunService = game:GetService("RunService")
