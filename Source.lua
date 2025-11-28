@@ -19,7 +19,7 @@ SafeContainer.Name = GetRandomString(math.random(10, 20))
 SafeContainer.Parent = CoreGui
 
 local Window = Rayfield:CreateWindow({
-   Name = "ESP v1.3 | by Varap",
+   Name = "ESP v1.4 | by Varap",
    LoadingTitle = "Loading...",
    ConfigurationSaving = {
       Enabled = true,
@@ -30,6 +30,7 @@ local Window = Rayfield:CreateWindow({
 })
 
 local settings = {
+    TeamCheck = false,
     BoxEnabled = true,
     TracersEnabled = false, 
     NameEnabled = false,    
@@ -45,71 +46,64 @@ local settings = {
     OutlineTransparency = 0,
 }
 
-local ESP_Tab = Window:CreateTab("ESP", "eye")
+local VisualsTab = Window:CreateTab("Visuals", "eye")
 
-ESP_Tab:CreateSection("Main Visuals")
+VisualsTab:CreateSection("General")
 
-ESP_Tab:CreateToggle({
+VisualsTab:CreateToggle({
+   Name = "Team Check",
+   CurrentValue = settings.TeamCheck,
+   Flag = "ESP_TeamCheck",
+   Callback = function(v) settings.TeamCheck = v end,
+})
+
+VisualsTab:CreateSection("ESP Elements")
+
+VisualsTab:CreateToggle({
    Name = "Boxes",
    CurrentValue = settings.BoxEnabled,
    Flag = "ESP_Box",
    Callback = function(v) settings.BoxEnabled = v end,
 })
 
-ESP_Tab:CreateToggle({
+VisualsTab:CreateToggle({
    Name = "Tracers (Lines)",
    CurrentValue = settings.TracersEnabled,
    Flag = "ESP_Tracers",
    Callback = function(v) settings.TracersEnabled = v end,
 })
 
-ESP_Tab:CreateToggle({
+VisualsTab:CreateToggle({
    Name = "Player Names",
    CurrentValue = settings.NameEnabled,
    Flag = "ESP_Names",
    Callback = function(v) settings.NameEnabled = v end,
 })
 
-ESP_Tab:CreateToggle({
+VisualsTab:CreateToggle({
    Name = "Health Bar",
    CurrentValue = settings.HealthBarEnabled,
    Flag = "ESP_Health",
    Callback = function(v) settings.HealthBarEnabled = v end,
 })
 
-ESP_Tab:CreateToggle({
+VisualsTab:CreateToggle({
    Name = "Distance (Text)",
    CurrentValue = settings.ShowDistance,
    Flag = "ESP_Distance",
    Callback = function(v) settings.ShowDistance = v end,
 })
 
-ESP_Tab:CreateSection("Team Colors")
+VisualsTab:CreateSection("Chams Settings")
 
-ESP_Tab:CreateColorPicker({
-    Name = "Attackers Color",
-    Color = settings.AttackerColor,
-    Flag = "Col_Attacker",
-    Callback = function(v) settings.AttackerColor = v end,
-})
-
-ESP_Tab:CreateColorPicker({
-    Name = "Defenders Color",
-    Color = settings.DefenderColor,
-    Flag = "Col_Defender",
-    Callback = function(v) settings.DefenderColor = v end,
-})
-
-ESP_Tab:CreateSection("Chams (Highlight)")
-
-ESP_Tab:CreateToggle({
+VisualsTab:CreateToggle({
    Name = "Enable Chams",
    CurrentValue = settings.ChamsEnabled,
    Flag = "Chams_Enabled",
    Callback = function(v) settings.ChamsEnabled = v end,
 })
 
-ESP_Tab:CreateSlider({
+VisualsTab:CreateSlider({
     Name = "Fill Transparency",
     Range = {0, 1},
     Increment = 0.05,
@@ -119,7 +113,7 @@ ESP_Tab:CreateSlider({
     Callback = function(v) settings.FillTransparency = v end,
 })
 
-ESP_Tab:CreateSlider({
+VisualsTab:CreateSlider({
     Name = "Outline Transparency",
     Range = {0, 1},
     Increment = 0.05,
@@ -127,6 +121,24 @@ ESP_Tab:CreateSlider({
     CurrentValue = settings.OutlineTransparency,
     Flag = "Chams_Outline",
     Callback = function(v) settings.OutlineTransparency = v end,
+})
+
+local ColorsTab = Window:CreateTab("Colors", "palette")
+
+ColorsTab:CreateSection("Team Appearance")
+
+ColorsTab:CreateColorPicker({
+    Name = "Attackers Color",
+    Color = settings.AttackerColor,
+    Flag = "Col_Attacker",
+    Callback = function(v) settings.AttackerColor = v end,
+})
+
+ColorsTab:CreateColorPicker({
+    Name = "Defenders Color",
+    Color = settings.DefenderColor,
+    Flag = "Col_Defender",
+    Callback = function(v) settings.DefenderColor = v end,
 })
 
 local PlayersTab = Window:CreateTab("Players", "user")
@@ -225,24 +237,15 @@ InfoTab:CreateButton({
 
 InfoTab:CreateSection("Update Log")
 
+
+InfoTab:CreateParagraph({
+    Title = "v1.4",
+    Content = "- Added Team Check"
+})
+
 InfoTab:CreateParagraph({
     Title = "v1.3",
-    Content = "- Added Info Tab\n- Added Discord Copy Button\n- New Logic for Chams"
-})
-
-InfoTab:CreateParagraph({
-    Title = "v1.2",
-    Content = "- Added Players Tab\n- View Account Age, Device, Team, UserID"
-})
-
-InfoTab:CreateParagraph({
-    Title = "v1.1",
-    Content = "- New Esp logic"
-})
-
-InfoTab:CreateParagraph({
-    Title = "v1.0",
-    Content = "- Initial Release\n- Box, Tracers, Names, Health\n- Chams (Highlight)"
+    Content = "- Added Info Tab & Discord Copy\n- CoreGui Highlight Support"
 })
 
 local RunService = game:GetService("RunService")
@@ -258,13 +261,13 @@ local function GetTeamColor(character)
     if pants then
         local template = tostring(pants.PantsTemplate)
         if string.find(template, ATTACKER_PANTS_ID) then
-            return settings.AttackerColor, true 
+            return settings.AttackerColor, true, "Attackers"
         elseif string.find(template, DEFENDER_PANTS_ID) then
-            return settings.DefenderColor, true
+            return settings.DefenderColor, true, "Defenders"
         end
     end
     
-    return Color3.new(1,1,1), false 
+    return Color3.new(1,1,1), false, "Lobby"
 end
 
 local function handleHighlight(player, character, color)
@@ -350,12 +353,18 @@ local function removeEsp(player)
 end
 
 RunService:BindToRenderStep("ESP_Update", Enum.RenderPriority.Camera.Value, function()
+    local myTeam = "Lobby"
+    if localPlayer.Character then
+        local _, _, tName = GetTeamColor(localPlayer.Character)
+        myTeam = tName
+    end
+
     for player, cache in pairs(espCache) do
         local character = player.Character
         
         if character and character.Parent and character:FindFirstChild("HumanoidRootPart") and character:FindFirstChild("Humanoid") and character.Humanoid.Health > 0 then
             
-            local currentColor, isInTeam = GetTeamColor(character)
+            local currentColor, isInTeam, targetTeam = GetTeamColor(character)
             
             if not isInTeam then
                 for _, obj in pairs(cache) do
@@ -363,6 +372,14 @@ RunService:BindToRenderStep("ESP_Update", Enum.RenderPriority.Camera.Value, func
                     if typeof(obj) == "Instance" and obj:IsA("Highlight") then obj.Enabled = false end
                 end
                 continue 
+            end
+
+            if settings.TeamCheck and targetTeam == myTeam and myTeam ~= "Lobby" then
+                for _, obj in pairs(cache) do
+                    if typeof(obj) ~= "Instance" then obj.Visible = false end
+                    if typeof(obj) == "Instance" and obj:IsA("Highlight") then obj.Enabled = false end
+                end
+                continue
             end
 
             local rootPart = character.HumanoidRootPart
